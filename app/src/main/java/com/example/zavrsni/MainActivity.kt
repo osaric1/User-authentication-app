@@ -59,34 +59,30 @@ class MainActivity : AppCompatActivity() {
             override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                 super.onAuthenticationError(errorCode, errString)
                 var authError = ""
-
                 authError = if(errString == "Cancel"){
                     "Cancelled"
                 } else{
                     "Greška: $errString"
                 }
-
                 Toast.makeText(applicationContext, authError, Toast.LENGTH_SHORT).show()
             }
-
-
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                 super.onAuthenticationSucceeded(result)
                 Toast.makeText(applicationContext, "Autentifikacija uspješna!", Toast.LENGTH_SHORT).show()
                 val cryptoFragment = CryptoFragment.newInstance()
                 openFragment(cryptoFragment)
             }
-
             override fun onAuthenticationFailed() {
                 super.onAuthenticationFailed()
                 Toast.makeText(applicationContext, "Autentifikacija neuspjela!",
                     Toast.LENGTH_SHORT)
                     .show()
             }
-
         })
     }
 
+    @SuppressLint("SwitchIntDef")
+    @RequiresApi(Build.VERSION_CODES.R)
     private fun checkAuthentication(biometricManager: BiometricManager){
         when (biometricManager.canAuthenticate(BIOMETRIC_STRONG)) {
             BiometricManager.BIOMETRIC_SUCCESS ->
@@ -112,7 +108,4 @@ class MainActivity : AppCompatActivity() {
         transaction.addToBackStack(null)
         transaction.commit()
     }
-
-
-
 }

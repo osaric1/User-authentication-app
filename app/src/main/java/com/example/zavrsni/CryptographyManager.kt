@@ -17,14 +17,12 @@ class CryptographyManager {
         val keyStore = KeyStore.getInstance("AndroidKeyStore")
         keyStore.load(null)
         keyStore.getKey(keyName, null)?.let { return it as SecretKey }
-
         val keyGenParameterSpec = KeyGenParameterSpec.Builder(keyName, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
             .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
             .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
             .setKeySize(256)
             .setUserAuthenticationRequired(true)
             .build()
-
         val keyGenerator = KeyGenerator.getInstance(
                 KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore"
         )

@@ -13,15 +13,11 @@ import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import java.nio.charset.Charset
-import java.security.spec.AlgorithmParameterSpec
-import java.util.concurrent.Executor
 import javax.crypto.Cipher
-import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.IvParameterSpec
 
 class CryptoFragment: Fragment() {
     private lateinit var cryptographyManager: CryptographyManager
-    private final var REQUEST_CODE: Int = 12
     private lateinit var button: Button
     private lateinit var plainText: EditText
     private lateinit var biometricPrompt: BiometricPrompt
@@ -35,7 +31,7 @@ class CryptoFragment: Fragment() {
     {
         var view = inflater.inflate(R.layout.crypto_fragment,container,false)
         cryptographyManager = CryptographyManager()
-        biometricPrompt = createBiometricPrompt()
+        biometricPrompt = createCryptoBiometricPrompt()
         plainText = view.findViewById(R.id.tekst)
 
         promptInfo = BiometricPrompt.PromptInfo.Builder()
@@ -48,25 +44,21 @@ class CryptoFragment: Fragment() {
 
         button =  view.findViewById<Button>(R.id.button)
         button.setOnClickListener {
+            val cipher = cryptographyManager.getCipher()
+            val secretKey = cryptographyManager.generateSecretKey(keyName)
             if(button.text == "Encrypt"){
-                val cipher = cryptographyManager.getCipher()
-                val secretKey = cryptographyManager.generateSecretKey(keyName)
                 cipher.init(Cipher.ENCRYPT_MODE, secretKey)
-                biometricPrompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))
             }
             else{
-                val cipher = cryptographyManager.getCipher()
-                val secretKey = cryptographyManager.generateSecretKey(keyName)
                 cipher.init(Cipher.DECRYPT_MODE,secretKey,IvParameterSpec(iv))
-                biometricPrompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))
             }
+            biometricPrompt.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))
         }
         return view
     }
 
-    private fun createBiometricPrompt(): BiometricPrompt{
+    private fun createCryptoBiometricPrompt(): BiometricPrompt{
         val executor = ContextCompat.getMainExecutor(requireContext())
-
         return BiometricPrompt(this, executor, object: BiometricPrompt.AuthenticationCallback(){
             override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                 super.onAuthenticationError(errorCode, errString)
@@ -80,11 +72,8 @@ class CryptoFragment: Fragment() {
 
                 Toast.makeText(context, authError, Toast.LENGTH_SHORT).show()
             }
-
-
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                 super.onAuthenticationSucceeded(result)
-
                 val data = if(button.text == "Encrypt"){
                     val encryptedText = cryptographyManager.encryptData(plainText.text.toString(),result.cryptoObject?.cipher!!)
                     ciphertext = encryptedText.ciphertext
@@ -92,32 +81,23 @@ class CryptoFragment: Fragment() {
                     button.text = "Decrypt"
 
                     String(ciphertext, Charset.forName("UTF-8"))
-
                 }
                 else{
                     button.text = "Encrypt"
                     cryptographyManager.decryptData(ciphertext, result.cryptoObject?.cipher!!)
-
                 }
                 plainText.setText(data)
             }
-
             override fun onAuthenticationFailed() {
                 super.onAuthenticationFailed()
                 Toast.makeText(context, "Autentifikacija neuspjela!",
                     Toast.LENGTH_SHORT)
                     .show()
             }
-
         })
     }
 
     companion object {
         fun newInstance(): CryptoFragment = CryptoFragment()
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
     }
 }
